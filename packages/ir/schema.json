@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qlab.dev/ir/1",
+  "title": "QUBIQ circuit IR v1",
+  "description": "Canonical circuit shared by the browser simulator, the runner and every SDK converter. Qubit q0 is the LEFTMOST character of every bitstring; classical bit c0 is the leftmost character of counts keys; register-valued conditions read c0 as the least significant bit.",
+  "type": "object",
+  "required": ["n", "ops"],
+  "properties": {
+    "version": { "const": "qlab-ir/1" },
+    "name": { "type": "string" },
+    "n": { "type": "integer", "minimum": 1, "maximum": 1000 },
+    "nc": { "type": "integer", "minimum": 0 },
+    "registers": { "type": "array", "items": { "type": "object", "required": ["name", "kind", "start", "size"], "properties": { "name": { "type": "string" }, "kind": { "enum": ["quantum", "classical"] }, "start": { "type": "integer" }, "size": { "type": "integer" } } } },
+    "params": { "type": "object", "additionalProperties": { "type": "number" }, "description": "Default values for named symbols used in op parameters." },
+    "ops": { "type": "array", "items": { "$ref": "#/$defs/op" } }
+  },
+  "$defs": {
+    "gate": { "enum": ["I", "X", "Y", "Z", "H", "S", "SDG", "T", "TDG", "SX", "SXDG", "P", "RX", "RY", "RZ", "U", "SWAP", "ISWAP", "ISWAPDG", "RXX", "RYY", "RZZ", "M", "RESET", "BARRIER"] },
+    "op": {
+      "type": "object", "required": ["g", "q"],
+      "properties": {
+        "g": { "$ref": "#/$defs/gate" },
+        "q": { "type": "array", "items": { "type": "integer" }, "minItems": 1, "description": "Target qubits (2 for SWAP/ISWAP/RXX/RYY/RZZ; all qubits for BARRIER)." },
+        "c": { "type": "array", "items": { "type": "integer" }, "description": "Control qubits (|1⟩-controlled)." },
+        "p": { "type": "array", "items": { "type": ["number", "string"] }, "description": "Angles in radians, or expressions over params (e.g. \"2*gamma\", \"pi/4\")." },
+        "cb": { "type": "integer", "description": "Classical bit written by M (defaults to the qubit index)." },
+        "cond": { "oneOf": [ { "type": "object", "required": ["bit", "val"], "properties": { "bit": { "type": "integer" }, "val": { "enum": [0, 1] } } }, { "type": "object", "required": ["reg", "val"], "properties": { "reg": { "const": "c" }, "val": { "type": "integer" } } } ] },
+        "col": { "type": "number", "description": "Time slice (layout only; execution order is by col, then list order)." },
+        "label": { "type": "string" }
+      }
+    }
+  }
+}

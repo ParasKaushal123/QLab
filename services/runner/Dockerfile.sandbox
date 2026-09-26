@@ -1,0 +1,9 @@
+# Throwaway image for /v1/exec. No network is attached at run time (--network none).
+FROM python:3.11-slim
+ENV PYTHONDONTWRITEBYTECODE=1 PIP_NO_CACHE_DIR=1 MPLBACKEND=Agg
+WORKDIR /sbx
+COPY requirements.txt .
+RUN pip install -r requirements.txt && useradd -m -u 10001 sbx
+COPY qlab_runner ./qlab_runner
+ENV PYTHONPATH=/sbx HOME=/tmp
+USER 10001

@@ -1,0 +1,21 @@
+{
+  "name": "qlab-web",
+  "version": "0.1.0",
+  "description": "QUBIQ — interactive quantum-computing course and circuit workbench",
+  "scripts": {
+    "test:physics": "node runtests.js",
+    "test:content": "node contenttest.js",
+    "test:workbench": "node wbtest.js",
+    "test": "node runtests.js && node contenttest.js && node wbtest.js",
+    "build": "python build.py"
+  },
+  "keywords": [
+    "quantum-computing",
+    "qiskit",
+    "cirq",
+    "pennylane",
+    "quantum-circuits",
+    "interactive-learning"
+  ],
+  "license": "Apache-2.0"
+}

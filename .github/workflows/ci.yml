@@ -1,0 +1,74 @@
+name: QUBIQ CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  web-tests:
+    name: Frontend Physics & Workbench Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Run Physics Tests
+        run: |
+          cd apps/web
+          node runtests.js
+      - name: Run Content Tests
+        run: |
+          cd apps/web
+          node contenttest.js
+      - name: Run Workbench Tests
+        run: |
+          cd apps/web
+          node wbtest.js
+      - name: Build Web Bundle
+        run: |
+          cd apps/web
+          python build.py
+
+  runner-tests:
+    name: Quantum Runner & Cross-SDK Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - name: Install Runner Dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r services/runner/requirements.txt pytest httpx sseclient-py
+      - name: Run Cross-SDK Agreement Tests
+        run: |
+          export PYTHONPATH="services/runner"
+          pytest tests/crossval -q --tb=short
+      - name: Run API Smoke Test
+        run: |
+          export QLAB_SANDBOX="local"
+          python tests/runner/smoke_api.py
+      - name: Run Auth & Projects Test
+        run: |
+          export PYTHONPATH="services/runner"
+          pytest tests/runner/test_auth_projects.py -v
+
+  honesty-lint:
+    name: Provenance & Honesty Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run Provenance Linter
+        run: |
+          python tests/lint_provenance.py

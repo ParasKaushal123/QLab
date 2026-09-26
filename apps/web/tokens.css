@@ -1,0 +1,30 @@
+/* =====================================================================
+   TOKENS — QUBIQ, Adora/Steep direction.
+   One action colour (violet), plum for display, ink for text, pastels as
+   confetti on cards, gates, badges and cursors.
+===================================================================== */
+:root{
+  --violet:#592EFF; --violet-d:#4A22E8; --violet-soft:#F3F0FF;
+  --plum:#21164C; --ink:#353241; --muted:#5F5F69; --faint:#8C8A96;
+  --hairline:#E0E0DB; --recessed:#F2F2EF; --recessed2:#EEEEEE; --white:#FFFFFF; --dot:#D3D3CC;
+  --sky:#BCF2FF; --lime:#DFFF9D; --pink:#FFAAE6; --cyan:#2ED6FF; --limepop:#A2EA13; --magenta:#F843C2;
+  /* tinted insight cards: bg / text */
+  --t-blue:#E8F1FC; --t-blue-i:#1B4B82; --t-rose:#FBEDEA; --t-rose-i:#7A2E1D; --t-lime:#F1FBDC; --t-lime-i:#3F5A0A; --t-lilac:#EFEAFF; --t-lilac-i:#3A248F;
+  /* gate families */
+  --g-pauli:#BCF2FF; --g-pauli-i:#0B5566; --g-phase:#FFD6F1; --g-phase-i:#7A1F5E; --g-rot:#DFFF9D; --g-rot-i:#3F5A0A; --g-ctl:#EFEAFF; --g-ctl-i:#21164C; --g-two:#FFE9B8; --g-two-i:#6B4A00; --g-meas:#FFE1DC; --g-meas-i:#9A2A1A;
+  --ok:#3F7A12; --bad:#B42318;
+  /* type */
+  --display:'Instrument Sans','General Sans',ui-sans-serif,system-ui,sans-serif;
+  --sans:'Plus Jakarta Sans',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  /* shape */
+  --r-frame:40px; --r-card:28px; --r-card-s:24px; --r-ctl:10px; --r-pill:999px;
+  --shadow:0 8px 24px rgba(33,22,76,.08); --shadow-lg:0 18px 48px rgba(33,22,76,.12);
+  --ease:cubic-bezier(.22,1,.36,1);
+  /* legacy names used by the instruments, mapped onto the new palette */
+  --bg:#FFFFFF; --fog:#F7F7F5; --mist:#F3F3F0; --ink2:#5F5F69; --slate:#6C6B75; --smoke:#A3A2AB; --hair:#E8E8E3; --hair2:#D6D6D0;
+  --peach:#EFEAFF; --sienna:#592EFF; --graphite:#8C8A96; --warn:#8A5A12;
+  --f-single:#0B5566; --f-phase:#7A1F5E; --f-rot:#3F5A0A; --f-control:#592EFF; --f-measure:#9A2A1A; --f-meta:#8C8A96;
+  --serif:var(--sans);
+  color-scheme:light;
+}

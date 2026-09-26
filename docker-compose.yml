@@ -1,0 +1,46 @@
+# docker compose build && docker compose up
+# web  → http://localhost:8080   runner → http://localhost:8765/docs
+services:
+  web:
+    build: ./apps/web
+    ports: ["8080:80"]
+    depends_on: [runner]
+
+  runner:
+    build: ./services/runner
+    ports: ["8765:8765"]
+    environment:
+      QLAB_SANDBOX: docker                 # local = rlimits child process (dev only)
+      QLAB_SANDBOX_IMAGE: qlab-sandbox:latest
+      QLAB_SANDBOX_RUNTIME: ${QLAB_SANDBOX_RUNTIME:-}   # set to runsc for gVisor
+      QLAB_WORKERS: "2"
+      QLAB_CORS: "http://localhost:8080"
+      QLAB_IBM_TOKEN: ${QLAB_IBM_TOKEN:-}
+      QBRAID_API_KEY: ${QBRAID_API_KEY:-}
+      REDIS_URL: redis://redis:6379/0
+      DATABASE_URL: postgresql://qlab:qlab@postgres:5432/qlab
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock   # spawns sibling sandbox containers
+    depends_on: [redis, postgres, sandbox-image]
+
+  # Builds the qlab-sandbox image once, then exits.
+  sandbox-image:
+    build:
+      context: ./services/runner
+      dockerfile: Dockerfile.sandbox
+    image: qlab-sandbox:latest
+    command: ["true"]
+
+  redis:
+    image: redis:7-alpine
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: qlab
+      POSTGRES_PASSWORD: qlab
+      POSTGRES_DB: qlab
+    volumes: [pgdata:/var/lib/postgresql/data]
+
+volumes:
+  pgdata:
