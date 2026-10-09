@@ -11,13 +11,16 @@ client = TestClient(app)
 
 def test_status_off_without_key(monkeypatch):
     monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     assert client.get("/v1/tutor/status").json()["available"] is False
     r = client.post("/v1/tutor", json={"messages": [{"role": "user", "text": "hi"}]})
     assert r.status_code == 503
 
 
 def test_answer_and_body(monkeypatch):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    monkeypatch.setenv("QUBIQ_TUTOR_PROVIDER", "gemini")
     seen = {}
 
     class Resp(io.BytesIO):
@@ -37,7 +40,9 @@ def test_answer_and_body(monkeypatch):
 
 
 def test_stream(monkeypatch):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    monkeypatch.setenv("QUBIQ_TUTOR_PROVIDER", "gemini")
 
     class Resp:
         def __enter__(self): return self

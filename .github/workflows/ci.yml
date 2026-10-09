@@ -63,6 +63,10 @@ jobs:
         run: |
           export PYTHONPATH="services/runner"
           pytest tests/runner/test_auth_projects.py -v
+      - name: Run AI Tutor Endpoint Test
+        run: |
+          export PYTHONPATH="services/runner"
+          pytest tests/runner/test_tutor.py -v
 
   honesty-lint:
     name: Provenance & Honesty Lint
@@ -76,7 +80,4 @@ jobs:
       - name: Run Provenance Linter
         run: |
           python tests/lint_provenance.py
-      - name: Run AI Tutor Endpoint Test
-        run: |
-          export PYTHONPATH="services/runner"
-          pytest tests/runner/test_tutor.py -v
+
