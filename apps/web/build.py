@@ -1,9 +1,9 @@
 import os, re
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 os.makedirs('dist', exist_ok=True)
-order=['simlib','tests','kit','ink','code','passes','score','grade','templates','runner','backends','views','llm','tutor','icons-data','board','stage','course-ch2','course','journey','home','algos','screens','compare','validation','lab','workbench','tour','scriptcards','blocks','platform','shell']
+order=['simlib','tests','kit','ink','code','passes','score','grade','templates','runner','backends','views','llm','tutor','icons-data','board','stage','course-ch2','course','journey','home','algos','screens','compare','validation','lab','insight','ai','workbench','tour','learn-content','learnw','learn','scriptcards','blocks','platform','shell']
 js='\n'.join(open(f+'.js', encoding='utf-8').read() for f in order).replace('if (typeof module !== \'undefined\') module.exports = PHYSICS_TESTS;','')
-css=open('tokens.css', encoding='utf-8').read()+open('ui.css', encoding='utf-8').read()+open('screens.css', encoding='utf-8').read()+open('workbench.css', encoding='utf-8').read()
+css=open('tokens.css', encoding='utf-8').read()+open('ui.css', encoding='utf-8').read()+open('screens.css', encoding='utf-8').read()+open('workbench.css', encoding='utf-8').read()+open('learn.css', encoding='utf-8').read()
 html=open('shell.html', encoding='utf-8').read().replace('/*CSS*/',css).replace('/*JS*/',js)
 open('dist/index.html','w', encoding='utf-8').write(html)
 open('dist/bundle.js','w', encoding='utf-8').write(js)

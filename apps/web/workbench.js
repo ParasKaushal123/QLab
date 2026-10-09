@@ -348,7 +348,9 @@ const Workbench = (() => {
       card('Probabilities', 'exact, from the final state', E.hist, E.histNote),
       card('Amplitudes', 'size is magnitude, line is phase', E.ampsC, E.ampsNote),
       card('Each qubit', 'Bloch vector at the end of the circuit', E.qubits),
-      runCard());
+      runCard(),
+      h('section', { class: 'wb-card wb-simcard wb-cmpcard' }, h('div', { class: 'wb-card-h' }, h('h3', {}, 'Compare SDKs'), h('span', { class: 'wb-hint' }, 'run the same circuit on several backends and measure how far apart they are')), E.cmpHost = h('div', { class: 'wb-cmp' })));
+    try { Compare.mount(E.cmpHost, () => boundCirc()); } catch (e) { E.cmpHost.append(h('p', { class: 'wb-note' }, 'Compare is unavailable: ' + e.message)); }
     E.main = h('div', { class: 'wb-main' }, E.circ);
     // code
     E.code = h('textarea', { spellcheck: 'false', autocapitalize: 'off', autocomplete: 'off', wrap: 'off', 'aria-label': 'Circuit code' });
@@ -356,37 +358,85 @@ const Workbench = (() => {
     E.codeMsg = h('p', { class: 'wb-codemsg', 'aria-live': 'polite' });
     E.langs = h('div', { class: 'wb-langs', role: 'tablist', 'aria-label': 'Language' }, [['qiskit', 'Qiskit'], ['cirq', 'Cirq'], ['pennylane', 'PennyLane'], ['qasm', 'OpenQASM 3']].map(([k, l]) => { const b = h('button', { type: 'button', role: 'tab', 'data-l': k, 'aria-selected': String(k === lang) }, l); b.addEventListener('click', () => { lang = k; Store.set('wbLang', k); E.langs.querySelectorAll('button').forEach(x => x.setAttribute('aria-selected', String(x.dataset.l === k))); renderCode(true); }); return b; }));
     const tabBtn = (k, ic, label) => { const b = h('button', { type: 'button', role: 'tab', 'data-side': k, 'aria-selected': 'false' }, icon(ic, 's'), label); b.addEventListener('click', () => setSide(k)); return b; };
-    E.sideTabs = h('div', { class: 'wb-sidetabs', role: 'tablist', 'aria-label': 'Right panel' }, tabBtn('code', 'code', 'Code'), tabBtn('sim', 'sphere', 'Simulation'));
+    E.sideTabs = h('div', { class: 'wb-sidetabs', role: 'tablist', 'aria-label': 'Right panel' }, tabBtn('code', 'code', 'Code'), tabBtn('sim', 'sphere', 'Simulation'), E.tutorTab = tabBtn('tutor', 'tutor', 'Tutor'));
+    E.tutorPane = h('div', { class: 'wb-tutorpane', role: 'tabpanel', 'aria-label': 'Tutor', hidden: true }); buildTutor();
     E.simPane = h('div', { class: 'wb-simpane', role: 'tabpanel', 'aria-label': 'Simulation' }, E.results);
     E.codePane = h('div', { class: 'wb-codepane', role: 'tabpanel', 'aria-label': 'Code' },
       h('div', { class: 'wb-code-h' }, h('span', { class: 'wb-live' }, h('i'), 'live'), h('span', { class: 'wb-hint' }, 'regenerates on every edit'), h('span', { class: 'grow' }),
         h('button', { type: 'button', class: 'btn bare', title: 'Copy code', onclick: () => copyText(E.code.value, 'Code copied.') }, icon('copy', 's')),
         h('button', { type: 'button', class: 'btn bare', title: 'Download', onclick: () => saveFile((S.name || 'circuit').replace(/\W+/g, '_').toLowerCase() + (lang === 'qasm' ? '.qasm' : '.py'), E.code.value) }, icon('download', 's'))),
       E.langs, h('div', { class: 'codebox wb-codebox' }, E.gut, E.hl, E.code), E.codeMsg);
-    E.codeSide = h('aside', { class: 'wb-code', 'aria-label': 'Code and simulation' }, E.sideTabs, E.codePane, E.simPane);
+    E.scriptPane = h('div', { class: 'wb-scriptpane', hidden: true });
+    E.codeMode = h('div', { class: 'wb-codemode', role: 'tablist', 'aria-label': 'Code mode' }, [['circuit', 'Circuit code'], ['script', 'Python script']].map(([k, l]) => { const b = h('button', { type: 'button', role: 'tab', 'data-m': k, 'aria-selected': String(k === 'circuit') }, l); b.addEventListener('click', () => setCodeMode(k)); return b; }));
+    E.codePane.prepend(E.codeMode); E.codePane.append(E.scriptPane);
+    E.codeSide = h('aside', { class: 'wb-code', 'aria-label': 'Code, simulation and tutor' }, E.sideTabs, E.codePane, E.simPane, E.tutorPane);
     E.split = h('div', { class: 'wb-split', role: 'separator', 'aria-orientation': 'vertical', 'aria-label': 'Resize code panel', tabindex: 0 });
     root.append(TB, E.main, E.split, E.codeSide, E.dock);
-    setSide(Store.get().wbSide === 'sim' ? 'sim' : 'code', true);
+    setSide(['sim', 'tutor'].includes(Store.get().wbSide) ? Store.get().wbSide : 'code', true);
     E.tip = h('div', { class: 'wb-tip', hidden: true, role: 'tooltip' }); document.body.append(E.tip);
     wireEvents();
   }
-  let side = 'code';
+  let side = 'code', codeMode = 'circuit', scriptMounted = false;
+  function setCodeMode(k) {
+    codeMode = k; E.codeMode.querySelectorAll('button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.m === k)));
+    [...E.codePane.children].forEach(c => { if (c !== E.codeMode) c.hidden = k === 'script' ? c !== E.scriptPane : c === E.scriptPane; });
+    if (k === 'script' && !scriptMounted) { scriptMounted = true; try { ScriptCards.mount(E.scriptPane); } catch (e) { E.scriptPane.replaceChildren(h('p', { class: 'wb-note' }, 'Script mode could not start: ' + e.message)); } }
+    if (k === 'circuit') renderCode(true);
+  }
   function setSide(k, quiet) {
     side = k; Store.set('wbSide', k);
     E.sideTabs.querySelectorAll('button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.side === k)));
-    E.codePane.hidden = k !== 'code'; E.simPane.hidden = k !== 'sim'; root.classList.toggle('side-sim', k === 'sim');
+    E.codePane.hidden = k !== 'code'; E.simPane.hidden = k !== 'sim'; E.tutorPane.hidden = k !== 'tutor'; if (k === 'tutor') refreshTutor(true); root.classList.toggle('side-sim', k === 'sim');
     if (E.dblock) E.dblock.classList.toggle('on', k === 'sim');
-    if (!quiet) { if (k === 'code') renderCode(true); smooth.forEach((v, key) => { if (key[0] === 'q') smooth.delete(key); }); kick(); announce(k === 'sim' ? 'Simulation panel open' : 'Code panel open'); }
+    if (!quiet) { if (k === 'code') renderCode(true); smooth.forEach((v, key) => { if (key[0] === 'q') smooth.delete(key); }); kick(); announce(k === 'sim' ? 'Simulation panel open' : k === 'tutor' ? 'Tutor panel open' : 'Code panel open'); }
+  }
+  /* ---------------- Tutor tab: live explanation, mistake checks, ask the AI ---------------- */
+  let tutorT = 0, tutorIssues = [];
+  function tutorCirc() { const P = plan || compile(); const lab = o => { if (!o.meta || o.meta.gc < 0 || o.meta.anti) return o; const x = S.cols[o.meta.gc] && S.cols[o.meta.gc][o.meta.w[0]]; return x ? Object.assign({}, o, { meta: Object.assign({}, o.meta, { label: title(x.k) + (x.p ? '(' + pretty(x.p) + ')' : '') }) }) : o; }; return { n: S.n, nc: S.n, ops: P.ir.ops.map(lab), params: { t } }; }
+  function buildTutor() {
+    E.tIssues = h('div', { class: 'wb-tissues' }); E.tSteps = h('ol', { class: 'wb-tsteps' }); E.tChat = h('div', { class: 'wb-tchat' });
+    E.tMode = h('button', { type: 'button', class: 'wb-tmode', onclick: () => { AI.setMode(AI.mode() === 'local' ? 'auto' : 'local'); paintMode(); } });
+    const paintMode = () => { const can = AI.claude || AI.server.available; E.tMode.textContent = AI.provider() === 'local' ? (can ? `Use ${AI.claude ? 'Claude' : AI.server.provider === 'claude' ? 'Claude API' : 'Gemini'}` : 'AI: built-in') : 'Use built-in only'; E.tMode.title = AI.label(); E.tMode.disabled = AI.provider() === 'local' && !can && AI.mode() !== 'local'; };
+    AI.onChange(paintMode); paintMode();
+    E.tutorPane.append(
+      h('section', { class: 'wb-tsec' }, h('div', { class: 'wb-tsh' }, icon('check', 's'), h('h4', {}, 'Checks'), h('span', { class: 'wb-hint' }, 'mistakes and simplifications, live')), E.tIssues),
+      h('section', { class: 'wb-tsec' }, h('div', { class: 'wb-tsh' }, icon('play', 's'), h('h4', {}, 'What your circuit does'), h('span', { class: 'wb-hint' }, 'step by step, updates on every edit')), E.tSteps),
+      h('section', { class: 'wb-tsec grow' }, E.tChat, h('div', { class: 'wb-tfoot' }, E.tMode)));
+    E.chat = AIChat.mount(E.tChat, () => ({ circuit: tutorCirc(), where: 'lab', onIssue: fixIssue }), { compact: true, placeholder: 'Ask about this circuit…', suggestions: ['Explain my circuit step by step', 'Is anything wrong?', 'Is it entangled?', 'What is superposition?'] });
+  }
+  function fixIssue(i) {
+    if (!i.cells) return; change(() => i.cells.forEach(c => { if (S.cols[c.gc]) S.cols[c.gc][c.w] = null; }), `${i.fix}: ${i.title}`);
+    render(); toast(`${i.fix}. Undo with ⌘Z.`);
+  }
+  function hlCol(k) { E.grid.querySelectorAll('.wb-g.hl').forEach(g => g.classList.remove('hl')); if (k == null || k < 0) return; E.grid.querySelectorAll(`.wb-g[data-c="${k}"]`).forEach(g => g.classList.add('hl')); }
+  function refreshTutor(now) {
+    clearTimeout(tutorT);
+    tutorT = setTimeout(() => {
+      if (!E.tIssues) return; let C; try { C = tutorCirc(); } catch (e) { return; }
+      let issues = []; try { issues = Insight.diagnose(C, { lab: true }); } catch (e) { }
+      tutorIssues = issues; const warn = issues.filter(i => i.sev !== 'info').length;
+      E.tutorTab.replaceChildren(icon('tutor', 's'), 'Tutor', issues.length ? h('span', { class: 'wb-tcount ' + (warn ? 'warn' : 'info'), 'aria-label': `${issues.length} notes` }, String(issues.length)) : '');
+      if (side !== 'tutor') return;
+      E.tIssues.replaceChildren(...(issues.length ? issues.slice(0, 6).map(i => h('div', { class: 'wb-issue ' + i.sev }, h('span', { class: 'wb-isev' }, i.sev === 'error' ? 'Error' : i.sev === 'warn' ? 'Check' : 'Tip'),
+        h('div', {}, h('b', {}, i.title), h('p', {}, i.detail), h('div', { class: 'wb-iact' }, i.fix ? h('button', { type: 'button', class: 'wb-ibtn', onclick: () => fixIssue(i) }, i.fix) : null, h('button', { type: 'button', class: 'wb-ibtn ghost', onclick: () => E.chat.ask(`Why is this a problem: ${i.title}?`) }, 'Why?')))))
+        : [h('p', { class: 'wb-ok' }, icon('check', 's'), 'No mistakes found.')]));
+      let N = null; try { N = Insight.narrate(C); } catch (e) { }
+      E.tSteps.replaceChildren(...(N ? N.steps.map(st => h('li', { class: (st.changed || st.label === 'Start' ? '' : 'quiet') + (st.key >= 0 ? ' wb-hlable' : ''), tabindex: st.key >= 0 ? 0 : null, onmouseenter: () => hlCol(st.key), onfocus: () => hlCol(st.key), onmouseleave: () => hlCol(null), onblur: () => hlCol(null), title: st.key >= 0 ? 'Highlights this step on the circuit' : null }, h('div', { class: 'wb-tsl' }, h('b', {}, st.label), st.gates.length ? h('span', { class: 'mono' }, st.gates.join(' · ')) : null),
+        h('p', {}, st.lines.join(' ')), h('p', { class: 'wb-tstate mono' }, st.state))) : [h('li', {}, h('p', {}, 'Step-by-step explanations appear here.'))]));
+      if (N && N.note) E.tSteps.append(h('li', {}, h('p', {}, N.note)));
+    }, now ? 0 : 180);
   }
   function runCard() {
     E.backend = h('select', { class: 'wb-sel', 'aria-label': 'Backend' });
+    E.noise = h('select', { class: 'wb-sel', 'aria-label': 'Noise (browser engine)', title: 'Noise for the browser engine. SDK backends use their own device noise.' }, [['off', 'Ideal'], ['light', 'Light noise'], ['device', 'Device-like noise'], ['heavy', 'Heavy noise']].map(([v, l]) => h('option', { value: v, selected: v === (Store.get().wbNoise || 'off') }, l)));
+    E.noise.addEventListener('change', () => Store.set('wbNoise', E.noise.value));
     E.shots = h('select', { class: 'wb-sel', 'aria-label': 'Shots' }, ['100', '1000', '4000', '10000'].map(v => h('option', { value: v, selected: v === '1000' }, v + ' shots')));
     E.runBtn = h('button', { type: 'button', class: 'btn primary' }, icon('play', 's'), 'Run');
     E.runBtn.addEventListener('click', () => runShots());
     E.rdot = h('span', { class: 'wb-rdot', title: 'Runner status' }); E.rtxt = h('span', { class: 'wb-rtxt' }, 'checking runner…');
     fillBackends(null);
     return h('section', { class: 'wb-card wb-runcard' }, h('div', { class: 'wb-card-h' }, h('h3', {}, 'Measure'), h('span', { class: 'wb-hint' }, 'sample shots on the browser engine or a real SDK through the runner')),
-      h('div', { class: 'row wb-runrow' }, E.backend, E.shots, E.runBtn, h('span', { class: 'wb-rstat' }, E.rdot, E.rtxt)), E.runBody);
+      h('div', { class: 'row wb-runrow' }, E.backend, E.noise, E.shots, E.runBtn, h('span', { class: 'wb-rstat' }, E.rdot, E.rtxt)), E.runBody);
   }
   const RUNNER = () => Runner.url();
   const DEFAULT_BACKENDS = [['browser', 'QUBIQ browser engine'], ['aer.statevector', 'Qiskit Aer · statevector'], ['aer.fake_sherbrooke', 'Qiskit Aer · FakeSherbrooke noise'], ['cirq.simulator', 'Cirq · Simulator'], ['pennylane.default.qubit', 'PennyLane · default.qubit'], ['pennylane.lightning.qubit', 'PennyLane · lightning.qubit'], ['qbraid.cirq', 'qBraid → Cirq']];
@@ -592,9 +642,17 @@ const Workbench = (() => {
   /* ---------------- shots: browser engine or runner ---------------- */
   function measuredWires() { const m = [...compileQuick().measured.keys()].sort((a, b) => a - b); return m.length ? m : [...Array(S.n).keys()]; }
   function exactDist(qs) { const m = Sim.marginal(frame.probs, S.n, qs); return m; }
+  const NOISE = { light: { p1: 0.001, p2: 0.01, readout: 0.01 }, device: { p1: 0.003, p2: 0.02, readout: 0.02 }, heavy: { p1: 0.02, p2: 0.06, readout: 0.05 } };
+  function boundCirc() { const P = plan || compile(); return { n: S.n, nc: S.n, name: S.name, ops: P.ir.ops.map(o => Object.assign({}, o, { p: (o.p || []).map(v => typeof v === 'number' ? v : evalE(v, t)) })), params: { t } }; }
   async function runShots() {
     simulate(); const be = E.backend.value, shots = +E.shots.value, qs = measuredWires(), seed = Math.floor(Math.random() * 1e6);
     const exact = exactDist(qs);
+    if (be === 'browser' && E.noise.value !== 'off') {
+      const nz = NOISE[E.noise.value], C = boundCirc();
+      let r; try { r = Sim.sample(C, shots, { seed, noise: nz }); } catch (e) { runError('Noisy simulation failed: ' + e.message); return; }
+      const keyQs = r.keys || qs, ex = exactDist(keyQs);
+      addRun({ counts: r.counts, shots, prov: { sdk: 'QUBIQ browser engine', where: 'browser', seed, shots, method: `${r.method || 'density matrix'} · ${E.noise.selectedOptions[0].textContent.toLowerCase()} (1q ${nz.p1 * 100}%, 2q ${nz.p2 * 100}%, readout ${nz.readout * 100}%)`, t: plan.timeDep ? +t.toFixed(3) : null }, exact: ex, qs: keyQs }); return;
+    }
     if (be === 'browser') {
       const rng = Sim.mulberry(seed), keys = Object.keys(exact), cum = []; let acc = 0; keys.forEach(k => { acc += exact[k]; cum.push(acc); });
       const counts = {}; for (let i = 0; i < shots; i++) { const r = rng() * acc; let j = cum.findIndex(c => r <= c); if (j < 0) j = keys.length - 1; counts[keys[j]] = (counts[keys[j]] || 0) + 1; }
@@ -629,7 +687,7 @@ const Workbench = (() => {
     const mx = Math.max(...keys.map(k => R.counts[k] || 0), 1), shown = keys.length > 32 ? keys.filter(k => R.counts[k]).sort((a, b) => R.counts[b] - R.counts[a]).slice(0, 32) : keys;
     const el = h('div', { class: 'wb-run' }, Runner.provenanceBadge(Object.assign({ shots: R.shots }, pv)),
       h('div', { class: 'wb-counts' }, shown.map(k => h('div', { class: 'hb' }, h('span', { class: 'v' }, String(R.counts[k] || 0)), h('span', { class: 'track' }, h('i', { style: { height: ((R.counts[k] || 0) / mx * 100) + '%' } }), h('em', { style: { bottom: ((R.exact[k] || 0) * tot / mx * 100) + '%' } })), h('span', { class: 'k mono' }, k)))),
-      h('p', { class: 'wb-note' }, `Measured q${R.qs.join(', q')} · distance from the exact distribution (TVD) ${tvd.toFixed(3)}. The tick on each bar is the exact expectation.`));
+      h('p', { class: 'wb-note' }, `Measured q${R.qs.join(', q')} · distance from the exact distribution (TVD) ${tvd.toFixed(3)}. The tick on each bar is the ideal, noise-free expectation.${/noise/.test(pv.method || '') ? ' Simulated with ' + pv.method.split(' · ').slice(1).join(' · ') + '.' : ''}`));
     E.runBody.prepend(el); while (E.runBody.children.length > 4) E.runBody.lastChild.remove();
   }
   /* ---------------- code panel ---------------- */
@@ -684,6 +742,7 @@ const Workbench = (() => {
     E.lint.replaceChildren(
       h('span', { class: 'wb-met' }, h('span', {}, 'gates ', h('b', {}, String(P.ir.ops.filter(o => o.g !== 'M').length))), m ? h('span', {}, 'depth ', h('b', {}, String(m.depth))) : null, m ? h('span', {}, 'two-qubit ', h('b', {}, String(m.cx))) : null, P.timeDep ? h('span', { class: 'badge b-violet' }, 'animated by t') : null),
       ...errs.slice(0, 3).map(([key, msg]) => { const [c, w] = key.split(':'); return h('span', { class: 'wb-err' }, `Column ${+c + 1}, q${w}: ${msg}`); }));
+    refreshTutor();
   }
   /* ---------------- edits ---------------- */
   function setQubits(n) {
@@ -790,9 +849,18 @@ const Workbench = (() => {
   /* ---------------- misc wiring ---------------- */
   function tplMenu(anchor) {
     const old = document.querySelector('.wb-menu'); if (old) { old.remove(); return; }
-    const m = h('div', { class: 'pop wb-menu', role: 'menu' }, TEMPLATES.map(([name, f]) => h('button', { type: 'button', role: 'menuitem', class: 'wb-mi', onclick: () => { m.remove(); change(() => { const st = f(); S.n = st.n; S.init = st.init; S.cols = st.cols; S.name = name; }, `Loaded ${name}`); smooth.clear(); t = 0; setPlaying(true); } }, name)));
+    const m = h('div', { class: 'pop wb-menu', role: 'menu' }, h('div', { class: 'wb-mh' }, 'Examples'), ...TEMPLATES.map(([name, f]) => h('button', { type: 'button', role: 'menuitem', class: 'wb-mi', onclick: () => { m.remove(); change(() => { const st = f(); S.n = st.n; S.init = st.init; S.cols = st.cols; S.name = name; }, `Loaded ${name}`); smooth.clear(); t = 0; setPlaying(true); } }, name)), h('div', { class: 'wb-mh' }, 'Build your own'), h('button', { type: 'button', role: 'menuitem', class: 'wb-mi strong', onclick: () => { m.remove(); blockDialog(); } }, icon('layers', 's'), 'Block library: Grover-SAT, QPE, Shor-15, QAOA, adders…'));
     document.body.append(m); const r = anchor.getBoundingClientRect(); m.style.left = r.left + 'px'; m.style.top = (r.bottom + 6) + 'px'; m.style.position = 'fixed';
     setTimeout(() => addEventListener('pointerdown', function off(ev) { if (!m.contains(ev.target)) { m.remove(); removeEventListener('pointerdown', off); } }));
+  }
+  function blockDialog() {
+    const box = h('div', { class: 'wb-dlgbody' }), close = () => { dlg.remove(); removeEventListener('keydown', esc); };
+    const dlg = h('div', { class: 'wb-dlg', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Block library' }, h('div', { class: 'wb-dlgcard' }, h('div', { class: 'wb-dlgh' }, h('h3', {}, 'Block library'), h('p', {}, 'Parameterised generators for bigger circuits. Pick one, adjust its parameters, build it, then open it here.'), h('button', { type: 'button', class: 'btn bare wb-dlgx', 'aria-label': 'Close', onclick: () => close() }, icon('x', 's'))), box));
+    const esc = e => { if (e.key === 'Escape') close(); };
+    dlg.addEventListener('pointerdown', e => { if (e.target === dlg) close(); }); addEventListener('keydown', esc);
+    document.body.append(dlg);
+    try { Blocks.mount(box, { onOpen: () => { close(); smooth.clear(); render(); toast('Block opened in the Laboratory.'); } }); } catch (e) { box.textContent = 'The block library could not load: ' + e.message; }
+    const f = box.querySelector('select'); f && f.focus();
   }
   function wireEvents() {
     E.code.addEventListener('input', onCodeInput); E.code.addEventListener('scroll', syncScroll);

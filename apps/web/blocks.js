@@ -252,7 +252,7 @@ const Blocks = (() => {
       else if (typeof Lab !== 'undefined' && Lab && Lab.load) { Lab.load(circ); location.hash = '#canvas'; }
       else if (typeof toast === 'function') toast('No canvas is mounted to open this on.');
       if (opts.onOpen) opts.onOpen(circ);
-    } }, 'Open on canvas');
+    } }, 'Open in the Laboratory');
     const make = h('button', { type: 'button', class: 'btn', onclick: () => {
       let params = {};
       try { params = ta.value.trim() ? JSON.parse(ta.value) : {}; }

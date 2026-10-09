@@ -17,6 +17,10 @@ services:
       QLAB_CORS: "http://localhost:8080"
       QLAB_IBM_TOKEN: ${QLAB_IBM_TOKEN:-}
       QBRAID_API_KEY: ${QBRAID_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      QUBIQ_CLAUDE_MODEL: ${QUBIQ_CLAUDE_MODEL:-claude-sonnet-4-5}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.0-flash}
       REDIS_URL: redis://redis:6379/0
       DATABASE_URL: postgresql://qlab:qlab@postgres:5432/qlab
     volumes:

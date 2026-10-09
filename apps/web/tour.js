@@ -52,7 +52,7 @@ const Tour = (() => {
         done: () => { const c = cells(wire); return c.length === 2 && c.every(x => x.k === 'H'); } },
       { target: () => $('.wb-code'), prefer: ['left'],
         title: 'Back to |0⟩, every time', text: () => `q${wire} reads 1 with 0% chance. The first H didn’t pick a side: it split the qubit into two paths. The second H made them interfere, and the paths to 1 cancelled out. That is the whole trick of quantum computing.`,
-        actions: () => { E.name = Ctl.field({ label: 'Your name (optional)', placeholder: 'Your name (optional)' }); return [E.name, btn('Find my starting point →', () => finish('#placement')), btn('Keep building here', () => finish(null), 'tour-alt'), btn('Go to the course', () => finish('#course'), 'tour-skip')]; } }
+        actions: () => { E.name = Ctl.field({ label: 'Your name (optional)', placeholder: 'Your name (optional)' }); return [E.name, btn('Find my starting point →', () => finish('#placement')), btn('Keep building here', () => finish(null), 'tour-alt'), btn('Go to the lessons', () => finish('#learn'), 'tour-skip')]; } }
     ];
 
     function go(i) {

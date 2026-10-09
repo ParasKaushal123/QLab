@@ -143,9 +143,15 @@ const Landing = (() => {
   function render(el) {
     const frame = h('div', { class: 'l-frame' });
     el.replaceChildren(h('div', { class: 'landing' },
-      h('nav', { class: 'l-nav', 'aria-label': 'Main' }, h('a', { class: 'l-brand', href: '#landing' }, h('span', { class: 'mark' }, '◉'), 'QUBIQ'), h('div', { class: 'l-links' }, h('a', { href: '#lab' }, 'Product'), h('a', { href: '#course' }, 'Course'), h('a', { href: '#algorithms' }, 'Algorithms'), h('a', { href: '#classroom' }, 'For schools')), h('a', { class: 'l-login', href: '#home', onclick: () => Store.get().profile || Store.set('profile', { arrived: new Date().toISOString() }) }, 'Log in'), h('a', { class: 'primary', href: '#arrival' }, 'Start learning')),
+      h('nav', { class: 'l-nav', 'aria-label': 'Main' }, h('a', { class: 'l-brand', href: '#landing' }, h('span', { class: 'mark' }, '◉'), 'QUBIQ'), h('div', { class: 'l-links' }, h('a', { href: '#lab' }, 'Product'), h('a', { href: '#learn' }, 'Learn'), h('a', { href: '#algorithms' }, 'Algorithms'), h('a', { href: '#classroom' }, 'For schools')), h('a', { class: 'l-login', href: '#home', onclick: () => Store.get().profile || Store.set('profile', { arrived: new Date().toISOString() }) }, 'Log in'), h('a', { class: 'primary', href: '#arrival' }, 'Start learning')),
       h('header', { class: 'l-hero' }, h('h1', {}, 'Learn quantum by ', h('span', { class: 'squig' }, 'building'), ' it'), h('p', {}, 'Drag gates onto real circuits, watch every qubit respond, and let Qubit — your tutor — point at exactly what changed. From your first superposition to Shor, VQE and QAOA.'), h('div', { class: 'row', style: { justifyContent: 'center' } }, h('a', { class: 'primary', href: '#arrival' }, 'Start learning', icon('arrow', 's')), h('a', { class: 'btn', href: '#lab' }, 'Open the Laboratory'))),
-      frame));
+      frame,
+      h('section', { class: 'l-feats', 'aria-label': 'What QUBIQ gives you' }, [
+        ['course', 'Four structured modules', 'Qubits, gates, entanglement and algorithms: theory, worked maths and examples you can touch, 19 lessons in all.', '#learn'],
+        ['lab', 'A real circuit laboratory', 'Drag gates onto wires, see the state change on every edit, and read the same circuit as Qiskit, Cirq, PennyLane or QASM.', '#lab'],
+        ['tutor', 'An AI tutor that can see your work', 'It explains your circuit step by step, catches mistakes as you make them, and gives hints instead of answers.', '#learn'],
+        ['chart', 'Progress you can trust', 'Checks and module assessments feed a mastery score per concept, so you always know what to study next.', '#progress']
+      ].map(([ic, t, d, href]) => h('a', { class: 'l-feat', href }, h('span', { class: 'l-fi' }, icon(ic)), h('b', {}, t), h('p', {}, d))))));
     // a live product frame: the Laboratory in miniature
     const inner = h('div', { class: 'lf-canvas' }); frame.append(h('div', { class: 'lf-bar' }, h('i'), h('i'), h('i'), h('span', { class: 'lbl' }, 'Laboratory / Bell pair')), inner);
     const C = Templates.bell(); const cc = h('div', { class: 'lf-card lf-circ' }, h('p', { class: 'lf-h' }, icon('lab', 's'), 'Bell pair', h('span', { class: 'badge b-violet' }, '2 qubits'))); const sc = h('div'); cc.append(sc); Score(sc, { circ: C, editable: false, playhead: false, minCols: 4 });

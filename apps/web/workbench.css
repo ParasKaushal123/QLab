@@ -240,3 +240,19 @@ body.wb-dragging{cursor:grabbing;user-select:none}
 .tour-alt{height:38px;padding:0 14px;border:1px solid var(--hairline);border-radius:999px;background:var(--white);color:var(--plum);font:600 14px var(--sans);cursor:pointer}
 .tour-skip{height:38px;padding:0 6px;border:0;background:none;color:var(--muted);font:500 13.5px var(--sans);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 @media (prefers-reduced-motion:reduce){.tour-ring,.tour-pulse{animation:none}.tour-card.in{animation:none}}
+
+/* ---- code mode switch, script pane, compare, dialog, step highlight ---- */
+.wb-codemode{display:flex;gap:2px;background:var(--recessed);border-radius:10px;padding:3px;align-self:flex-start}
+.wb-codemode button{border:0;background:none;border-radius:8px;height:28px;padding:0 12px;font:600 12.5px var(--sans);color:var(--muted);cursor:pointer}
+.wb-codemode button[aria-selected=true]{background:var(--white);color:var(--plum);box-shadow:0 1px 3px rgba(33,22,76,.12)}
+.wb-scriptpane{flex:1;min-height:0;overflow:auto}
+.wb-cmp{min-height:40px}
+.wb-mh{font:700 11px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:8px 12px 4px}
+.wb-mi.strong{display:flex;gap:8px;align-items:center;font-weight:600;color:var(--violet)}
+.wb-dlg{position:fixed;inset:0;z-index:1400;background:rgba(33,22,76,.28);display:grid;place-items:center;padding:16px;animation:fin .2s var(--ease) both}
+.wb-dlgcard{width:min(620px,100%);max-height:calc(100vh - 32px);overflow:auto;background:var(--white);border-radius:22px;padding:20px 22px;box-shadow:0 24px 60px rgba(33,22,76,.3)}
+.wb-dlgh{position:relative;padding-right:40px;margin-bottom:12px}.wb-dlgh h3{margin:0;font:700 19px var(--sans);color:var(--plum)}.wb-dlgh p{margin:4px 0 0;font-size:14px;color:var(--muted)}
+.wb-dlgx{position:absolute;right:-6px;top:-6px}
+.wb-dlgbody .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.wb-dlgbody textarea{margin-top:8px}.wb-dlgbody .bad{color:#A1262B}
+.wb-g.hl{outline:3px solid var(--violet);outline-offset:3px;box-shadow:0 0 0 8px rgba(89,46,255,.14)}
+.wb-hlable{cursor:default}.wb-hlable:hover,.wb-hlable:focus{background:var(--violet-soft);outline:none;border-radius:0 8px 8px 0}

@@ -449,3 +449,44 @@ def get_shared_(token: str):
         raise HTTPException(404, "Shared circuit not found or link has expired")
     return s
 
+
+
+# ---------------- AI tutor (Gemini via server-side key; see tutor.py) ----------------
+from . import tutor as T  # noqa: E402
+from fastapi import Request  # noqa: E402
+
+
+class TutorReq(BaseModel):
+    system: str = ""
+    context: str = ""
+    messages: list[dict] = Field(default_factory=list)
+    stream: bool = False
+
+
+@app.get("/v1/tutor/status")
+def tutor_status():
+    return T.status()
+
+
+@app.post("/v1/tutor")
+def tutor(req: TutorReq, request: Request, authorization: Optional[str] = Header(None)):
+    if not T.key():
+        raise HTTPException(503, "The AI tutor isn't configured on this server (set ANTHROPIC_API_KEY or GEMINI_API_KEY).")
+    who = request.client.host if request.client else "unknown"
+    if authorization and authorization.startswith("Bearer "):
+        p = db.decode_token(authorization.split(" ", 1)[1])
+        if p and p.get("sub"):
+            who = "u:" + p["sub"]
+    err = T.allow(who)
+    if err:
+        raise HTTPException(429, err)
+    try:
+        body = T.build_body(req.system, req.context, req.messages)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    if req.stream:
+        return StreamingResponse(T.stream(body), media_type="text/event-stream")
+    try:
+        return {"text": T.answer(body), "model": T.model()}
+    except RuntimeError as e:
+        raise HTTPException(502, str(e))

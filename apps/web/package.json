@@ -6,7 +6,8 @@
     "test:physics": "node runtests.js",
     "test:content": "node contenttest.js",
     "test:workbench": "node wbtest.js",
-    "test": "node runtests.js && node contenttest.js && node wbtest.js",
+    "test:learn": "node learntest.js",
+    "test": "node runtests.js && node contenttest.js && node wbtest.js && node learntest.js",
     "build": "python build.py"
   },
   "keywords": [

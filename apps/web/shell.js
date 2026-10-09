@@ -1,7 +1,7 @@
 /* SHELL — frame, sidebar, top bar, router (bare #tokens), ⌘K palette. */
 const App = (() => {
-  const NAV = [['home', 'Home', 'home'], ['tutor', 'Tutor', 'tutor'], ['course', 'Course', 'course'], ['lab', 'Laboratory', 'lab'], ['algorithms', 'Algorithms', 'algorithms'], ['practice', 'Practice', 'practice'], ['notebook', 'Notebook', 'notebook'], ['validation', 'Validation', 'check']];
-  const VIEWS = ['arrival', 'placement', 'home', 'course', 'lesson', 'exam', 'lab', 'canvas', 'algorithms', 'alg', 'practice', 'challenge', 'notebook', 'classroom', 'tests', 'validation'];
+  const NAV = [['home', 'Home', 'home'], ['tutor', 'Tutor', 'tutor'], ['learn', 'Learn', 'course'], ['progress', 'Progress', 'chart'], ['lab', 'Laboratory', 'lab'], ['algorithms', 'Algorithms', 'algorithms'], ['practice', 'Practice', 'practice'], ['notebook', 'Notebook', 'notebook'], ['validation', 'Validation', 'check']];
+  const VIEWS = ['arrival', 'placement', 'home', 'course', 'lesson', 'exam', 'lab', 'canvas', 'algorithms', 'alg', 'practice', 'challenge', 'notebook', 'classroom', 'tests', 'validation', 'learn', 'mlesson', 'assess', 'progress'];
   let labMounted = false, canvasMounted = false, current = null, live = null;
   const $v = id => document.getElementById('view-' + id);
   /* ---- top bar API for pages ---- */
@@ -19,10 +19,10 @@ const App = (() => {
       h('div', { class: 'me' }, h('span', { class: 'av' }, name[0].toUpperCase()), h('div', {}, h('b', {}, name), h('span', {}, Platform.id ? 'Signed in' : 'On this device'))));
     markNav();
   }
-  function markNav() { const map = { canvas: 'lab', lesson: 'course', exam: 'course', alg: 'algorithms', challenge: 'practice', arrival: 'home', placement: 'home', tests: 'notebook', classroom: '' }; const v = document.body.dataset.view; document.querySelectorAll('.nav a').forEach(a => a.toggleAttribute('aria-current', a.dataset.nav === (map[v] ?? v))); document.querySelectorAll('.nav a[aria-current]').forEach(a => a.setAttribute('aria-current', 'page')); }
+  function markNav() { const map = { canvas: 'lab', lesson: 'learn', exam: 'learn', course: 'learn', mlesson: 'learn', assess: 'learn', alg: 'algorithms', challenge: 'practice', arrival: 'home', placement: 'home', tests: 'notebook', classroom: '' }; const v = document.body.dataset.view; document.querySelectorAll('.nav a').forEach(a => a.toggleAttribute('aria-current', a.dataset.nav === (map[v] ?? v))); document.querySelectorAll('.nav a[aria-current]').forEach(a => a.setAttribute('aria-current', 'page')); }
   /* ---- ⌘K: jump anywhere or ask Qubit ---- */
   function palette() {
-    if (document.getElementById('palette')) return; const items = [['Home', '#home'], ['Course map', '#course'], ['Laboratory', '#lab'], ['Algorithms', '#algorithms'], ['Practice', '#practice'], ['Notebook', '#notebook'], ['Classroom', '#classroom'], ['Validation', '#validation'], ['Verification', '#tests'], ...COURSE.chapters[2].lessons.map(l => [`Lesson 2.${l.n} · ${l.title}`, '#' + l.id]), ...(window.ALGOS || []).map(a => [`Algorithm · ${a.title}`, '#alg-' + a.id])];
+    if (document.getElementById('palette')) return; const items = [['Home', '#home'], ['Learn: modules', '#learn'], ['Progress', '#progress'], ...(typeof LEARN !== 'undefined' ? LEARN.lessons().map(x => [`${x.m.title} · ${x.l.title}`, '#m-' + x.l.id]).concat(LEARN.modules.map(m => [`${m.title} · assessment`, '#assess-' + m.id])) : []), ['Course map', '#course'], ['Laboratory', '#lab'], ['Algorithms', '#algorithms'], ['Practice', '#practice'], ['Notebook', '#notebook'], ['Classroom', '#classroom'], ['Validation', '#validation'], ['Verification', '#tests'], ...COURSE.chapters[2].lessons.map(l => [`Lesson 2.${l.n} · ${l.title}`, '#' + l.id]), ...(window.ALGOS || []).map(a => [`Algorithm · ${a.title}`, '#alg-' + a.id])];
     const inp = h('input', { class: 'uline', placeholder: 'Jump to… or ask Qubit anything', 'aria-label': 'Search or ask', style: { width: '100%', height: '48px', fontSize: '16px' } }), list = h('div', { role: 'listbox', style: { marginTop: '10px', maxHeight: '320px', overflow: 'auto' } });
     const box = h('div', { id: 'palette', class: 'pop', role: 'dialog', 'aria-label': 'Search and ask', style: { position: 'fixed', left: '50%', top: '16vh', transform: 'translateX(-50%)', width: 'min(560px,92vw)' } }, inp, list);
     const close = () => { box.remove(); removeEventListener('keydown', esc, true); }; const esc = e => { if (e.key === 'Escape') close(); };
@@ -35,7 +35,7 @@ const App = (() => {
     let k = location.hash.slice(1); const prof = Store.get().profile;
     if (!k) k = prof ? 'home' : 'landing'; if (k === 'today') k = 'home';
     let view = k, arg = null;
-    if (/^l-\d+-\d+$/.test(k)) { view = 'lesson'; arg = k; } else if (/^exam-\d+$/.test(k)) { view = 'exam'; arg = +k.split('-')[1]; } else if (/^alg-[\w-]+$/.test(k)) { view = 'alg'; arg = k.slice(4); } else if (/^ch-[\w-]+$/.test(k)) { view = 'challenge'; arg = k.slice(3); } else if (/^c-[\w-]+$/.test(k)) { view = 'lab'; arg = k.slice(2); }
+    if (/^l-\d+-\d+$/.test(k)) { view = 'lesson'; arg = k; } else if (/^exam-\d+$/.test(k)) { view = 'exam'; arg = +k.split('-')[1]; } else if (/^alg-[\w-]+$/.test(k)) { view = 'alg'; arg = k.slice(4); } else if (/^ch-[\w-]+$/.test(k)) { view = 'challenge'; arg = k.slice(3); } else if (/^c-[\w-]+$/.test(k)) { view = 'lab'; arg = k.slice(2); } else if (/^m-[a-z]\d+$/.test(k)) { view = 'mlesson'; arg = k.slice(2); } else if (/^assess-[\w-]+$/.test(k)) { view = 'assess'; arg = k.slice(7); }
     if (k === 'tutor') view = 'home';
     if (view !== 'landing' && !VIEWS.includes(view)) view = 'home';
     live && live.destroy && live.destroy(); live = null;
@@ -43,7 +43,7 @@ const App = (() => {
     const el = view === 'landing' ? $v('landing') : $v(view);
     el.classList.toggle('board-view', ['lab', 'canvas', 'course', 'alg', 'challenge'].includes(view));
     top({ arrival: ['Welcome'], placement: ['Placement'] }[view] || ''); markNav();
-    const R = { landing: () => Landing.render(el), arrival: () => { Tour.pending = true; location.replace('#lab'); return null; }, placement: () => Journey.placement(el), home: () => Home.render(el, { focusAsk: k === 'tutor' }), course: () => CourseMap.render(el), lesson: () => Course.lesson(el, arg), exam: () => Course.exam(el, arg), algorithms: () => Algos.gallery(el), alg: () => Algos.page(el, arg), practice: () => Practice.list(el), challenge: () => Practice.challenge(el, arg), notebook: () => Notebook.render(el), classroom: () => Classroom.render(el), tests: () => testsView(el), validation: () => Validation.render(el),
+    const R = { landing: () => Landing.render(el), arrival: () => { Tour.pending = true; location.replace('#lab'); return null; }, placement: () => Journey.placement(el), home: () => Home.render(el, { focusAsk: k === 'tutor' }), course: () => CourseMap.render(el), lesson: () => Course.lesson(el, arg), exam: () => Course.exam(el, arg), algorithms: () => Algos.gallery(el), alg: () => Algos.page(el, arg), practice: () => Practice.list(el), challenge: () => Practice.challenge(el, arg), notebook: () => Notebook.render(el), classroom: () => Classroom.render(el), tests: () => testsView(el), validation: () => Validation.render(el), learn: () => Learn.hub(el), mlesson: () => Learn.lesson(el, arg), assess: () => Learn.assess(el, arg), progress: () => Learn.progress(el),
       lab: () => { if (arg) { try { Workbench.load(Share.decode(arg)); } catch (e) { toast('That share link is damaged.'); } } if (!labMounted) { Workbench.mount(el); labMounted = true; } else Workbench.onShow(); return Tour.pending ? Tour.start() : null; },
       canvas: () => { if (!canvasMounted) { Lab.mount(el); canvasMounted = true; } try { Lab._load(Workbench.ir(), 'From the circuit page'); } catch (e) { } Lab.onShow(); } };
     live = R[view] ? R[view]() : null;
@@ -56,6 +56,8 @@ const App = (() => {
       h('div', { class: 'card' }, h('table', { class: 'tbl' }, h('tr', {}, h('th', {}, 'Check'), h('th', {}, 'Result'), h('th', {}, 'Computed')), ...T.map(t => h('tr', {}, h('td', {}, t.name), h('td', {}, h('span', { class: 'badge ' + (t.pass ? 'b-lime' : 'b-magenta') }, t.pass ? 'pass' : 'fail')), h('td', { class: 'mono' }, String(t.got))))))));
   }
   function start() {
+    // anything that "opens a circuit in the Lab" (algorithms, pinned circuits, script cards, tutor builds) lands in the Laboratory
+    if (typeof Lab !== 'undefined' && Lab.load && !Lab.load._wb) { const orig = Lab.load; Lab.load = function (c, ...rest) { try { orig.call(Lab, c, ...rest); } catch (e) { } try { Workbench.load(c); } catch (e) { toast('That circuit could not be opened in the Laboratory: ' + e.message); } }; Lab.load._wb = true; }
     const main = document.getElementById('main'); VIEWS.forEach(v => main.append(h('div', { class: 'view', id: 'view-' + v, hidden: true })));
     const tg = document.querySelector('.top .side-tg'); tg.append(icon('panel'));
     const setSide = c => { document.body.classList.toggle('side-collapsed', c); tg.setAttribute('aria-label', c ? 'Expand the sidebar' : 'Collapse the sidebar'); tg.title = (c ? 'Expand' : 'Collapse') + ' the sidebar ([)'; tg.setAttribute('aria-pressed', String(c)); Store.set('sideCollapsed', c); };

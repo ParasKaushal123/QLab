@@ -198,4 +198,4 @@ const Work = (() => {
 })();
 
 /* ---------------- capability access (platform) ---------------- */
-const Cap = (() => { const cache = {}; return { use(name) { if (name === 'sample' || !window.claude || !claude.use) return Promise.resolve(null); /* 'sample' (Claude) is never used */ return cache[name] || (cache[name] = claude.use(name).catch(() => null)); } }; })();
+const Cap = (() => { const cache = {}; return { use(name) { if (!window.claude || !claude.use) return Promise.resolve(null); /* 'sample' (Claude) is used only through AI in ai.js */ return cache[name] || (cache[name] = claude.use(name).catch(() => null)); } }; })();

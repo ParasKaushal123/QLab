@@ -28,6 +28,10 @@ jobs:
         run: |
           cd apps/web
           node wbtest.js
+      - name: Run Learning Modules & Insight Tests
+        run: |
+          cd apps/web
+          node learntest.js
       - name: Build Web Bundle
         run: |
           cd apps/web
@@ -72,3 +76,7 @@ jobs:
       - name: Run Provenance Linter
         run: |
           python tests/lint_provenance.py
+      - name: Run AI Tutor Endpoint Test
+        run: |
+          export PYTHONPATH="services/runner"
+          pytest tests/runner/test_tutor.py -v
